@@ -14,7 +14,7 @@ def claim_content_points(url, title, publisher, main_claim) -> list[int]:
     #Content extraction
     content = content_extraction(url)
     print("Extracted content length:", len(content))
-    
+
     #Load the content to a document object
     docs = [Document(page_content=content)]
     print("docs object created successfully.")
