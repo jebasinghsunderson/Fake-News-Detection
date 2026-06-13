@@ -1,0 +1,11 @@
+# Environment variables
+.env
+.env.local
+
+__pycache__/
+*.pyc
+venv/
+.env
+.pytest_cache/
+
+docs/chroma/.env

@@ -1,10 +1,12 @@
-from newspaper import Article
-from ollama import chat
+from newspaper import Article, Config
 import json
-
+from google import genai
 from .claim_url_extraction import google_news_search
-from .content_extraction import content_extraction
 from .claim_content_extraction import claim_content_points
+from google.genai import types
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 def process_article(url) -> tuple[str, list[str]]:
     """
@@ -15,7 +17,19 @@ def process_article(url) -> tuple[str, list[str]]:
     )
     """
     # Extract article text
-    article_text =content_extraction(url)
+
+    config = Config()
+    config.browser_user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/137.0 Safari/537.36"
+    )
+
+    article = Article(url, config=config)
+    article.download()
+    article.parse()
+
+    article_text = article.text[:5000]
 
     # Prompt
 
@@ -60,53 +74,38 @@ Article:
 {article_text}
 """
     # LLM
-   
-    response = chat(
-        model="llama3.2:1b",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        format={
-            "type": "object",
-            "properties": {
-                "main_claim": {
-                    "type": "string"
-                },
-                "search_queries": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "minItems": 3,
-                    "maxItems": 3
-                }
+    client = genai.Client(api_key= os.getenv("GENAI_API_KEY"))#api_key=os.getenv("GENAI_API_KEY"))
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema = {
+        "type": "object",
+        "properties": {
+            "main_claim": {
+                "type": "string"
             },
-            "required": [
-                "main_claim",
-                "search_queries"
-            ]
+            "search_queries": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
         },
-        options={
-            "temperature": 0
-        }
+        "required": ["main_claim", "search_queries"]
+    },
+        temperature=0.2
+        )
     )
 
     # Parse
-    content = response["message"]["content"]
-
-    #try:
+    content = response.text
     result = json.loads(content)
-    # except Exception:
-    #     print("RAW MODEL OUTPUT:")
-    #     print(content)
-    #     raise
 
     main_claim = result["main_claim"]
-
-    queries = result["search_queries"][:3]
+    queries = result["search_queries"]
 
     # -------------------------
     # Validate queries
@@ -126,22 +125,18 @@ Article:
         clean_queries.append(q)
 
     queries = clean_queries
-
-
+    amount = len(queries)
+    point=0
+    print("Main Claim:", main_claim)
     for query in queries:
         print(f"\nQUERY: {query}")
 
         try:
             results = google_news_search(query)
-
-            for r in results[:3]:
-                print(r["title"])
-                print(r["url"])
-                print(r["published"])
-                point = claim_content_points(r["url"], r["title"],r["published"], main_claim)
-                print(point)
+            point += claim_content_points(results[0]["url"], results[0]["title"], results[0]["published"], main_claim)
 
         except Exception as e:
             print(e)
 
+    print("Average Points:", point/amount)
     return main_claim, queries
