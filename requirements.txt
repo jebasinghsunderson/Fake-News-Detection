@@ -1,0 +1,14 @@
+streamlit
+google-genai
+python-dotenv
+
+newspaper4k
+playwright
+feedparser
+
+langchain-core
+langchain-text-splitters
+langchain-huggingface
+
+chromadb
+sentence-transformers

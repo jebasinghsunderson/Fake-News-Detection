@@ -1,8 +1,3 @@
-# from .extractor import process_article
-# import os
-
-# newsdata.io API key: os.getenv("NEWS_API_KEY")
-# format :  https://newsdata.io/api/1/latest?apikey=pub_b459818a0c364eb193feca066802e633&q=???
 import feedparser
 from urllib.parse import quote_plus
 
