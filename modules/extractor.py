@@ -140,4 +140,4 @@ Article:
 
     print("Average Points:", point/amount)
     
-    return main_claim, queries, point/amount
+    return main_claim, queries
