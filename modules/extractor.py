@@ -74,7 +74,7 @@ Article:
 {article_text}
 """
     # LLM
-    client = genai.Client(api_key= os.getenv("GENAI_API_KEY"))#api_key=os.getenv("GENAI_API_KEY"))
+    client = genai.Client(api_key= os.getenv("GENAI_API_KEY"))
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -139,4 +139,5 @@ Article:
             print(e)
 
     print("Average Points:", point/amount)
+    
     return main_claim, queries
