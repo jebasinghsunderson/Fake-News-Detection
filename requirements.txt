@@ -13,3 +13,6 @@ langchain-chroma
 
 chromadb
 sentence-transformers
+
+lxml_html_clean
+nltk
